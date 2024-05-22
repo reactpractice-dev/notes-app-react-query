@@ -1,0 +1,14 @@
+{
+    "notes": [
+        {
+            "id": 1,
+            "title": "jane's phone number",
+            "content": "555 666 777"
+        },
+        {
+            "id": 2,
+            "title": "shopping list",
+            "content": "- milk\n-strawberries"
+        }
+    ]
+}
