@@ -1,5 +1,11 @@
-import { render, screen, within } from "@testing-library/react";
-import { http, HttpResponse } from "msw";
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+  within,
+  waitFor,
+} from "@testing-library/react";
+import { delay, http, HttpResponse } from "msw";
 import server from "../../../tests/mock-api-server";
 
 import NotesList from "../NotesList";
@@ -19,6 +25,21 @@ const createWrapper = () => {
 
 describe("Notes List", () => {
   describe("viewing notes", () => {
+    it("shows a loading indicator before the notes are ready", async () => {
+      server.use(
+        http.get("http://localhost:3000/notes", () => {
+          delay();
+          return HttpResponse.json([{ id: uuid(), content: "hello tests" }]);
+        })
+      );
+      render(<NotesList />, { wrapper: createWrapper() });
+
+      await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
+
+      const notes = screen.getAllByRole("listitem");
+      expect(notes.map((note) => note.textContent)).toEqual(["hello tests"]);
+    });
+
     it("shows notes with the latest one on top", async () => {
       server.use(
         http.get("http://localhost:3000/notes", () => {
@@ -31,7 +52,9 @@ describe("Notes List", () => {
       );
       render(<NotesList />, { wrapper: createWrapper() });
 
-      const notes = await screen.findAllByRole("listitem");
+      await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
+
+      const notes = screen.getAllByRole("listitem");
       expect(notes.map((note) => note.textContent)).toEqual([
         "third",
         "second",
@@ -81,11 +104,15 @@ describe("Notes List", () => {
           const postedNote = await request.json();
           postedNote.id = uuid();
           dummyNotes.push(postedNote);
+          console.log("ONE");
+          delay();
+          console.log("TWO");
           return HttpResponse.json(postedNote);
         }),
         http.delete("http://localhost:3000/notes/:id", async ({ params }) => {
           const index = dummyNotes.findIndex((note) => note.id === params.id);
           dummyNotes.splice(index, 1);
+          delay();
           return HttpResponse.json();
         }),
         http.patch(
@@ -94,6 +121,7 @@ describe("Notes List", () => {
             const index = dummyNotes.findIndex((note) => note.id === params.id);
             const postedNote = await request.json();
             dummyNotes[index] = { ...dummyNotes[index], ...postedNote };
+            delay();
             return HttpResponse.json();
           }
         )
@@ -112,9 +140,18 @@ describe("Notes List", () => {
         screen.getByRole("textbox", { name: "Content" }),
         "Don't forget to check the tests"
       );
-      await userEvent.click(screen.getByRole("button", { name: "Add note" }));
+      // click the button, but don't wait for the action to finish
+      // so we can check the button text changes when loading
+      userEvent.click(screen.getByRole("button", { name: "Add note" }));
 
-      // Check it's displayed in the notes list
+      // check the button becomes disabled and says 'Adding note'
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: /Adding note/i })
+        ).toBeDisabled();
+      });
+
+      // Check new note is displayed in the notes list
       const notes = await screen.findAllByRole("listitem");
       expect(notes).toHaveLength(2);
       expect(within(notes[0]).getByText("Testing")).toBeInTheDocument();
