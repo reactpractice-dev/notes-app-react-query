@@ -1,17 +1,13 @@
-# React + Vite
+# React Practice - Build a notes app
 
-Basic React boilerplate using Vite.
-
-Starts off from the React Javascript Vite template ([@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh)
-
-Adds on top:
-
-- support for testing React components with `vitest` and React Testing Library
-- support for mocking HTTP requests in tests using `msw`
+Starter repo for building a Notes App using React Query and json-server.
 
 Getting started:
 
-- `npm install`
-- `npm run dev`
+- `npm install` to install the dependencies
+- `npm run dev` to start the React app
+- `npm run backend-server` to start the notes backend built with `json-server`
+
+The Notes API is available at `http://localhost:3000/notes`. You can perform the usual `GET`, `PUT`, `POST`, `PATCH` and `DELETE` on it.
 
 To run the tests: `npm run test`.

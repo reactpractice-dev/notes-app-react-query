@@ -1,7 +1,14 @@
-import RandomQuote from "./RandomQuote";
+import NotesList from "./components/NotesList";
+import { QueryClient, QueryClientProvider } from "react-query";
+
+const queryClient = new QueryClient();
 
 function App() {
-  return <RandomQuote />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <NotesList />
+    </QueryClientProvider>
+  );
 }
 
 export default App;
