@@ -12,7 +12,11 @@ const NotesList = () => {
   } = useQuery("notes", () =>
     getNotes().then((notes) => {
       // reverse data so we always show latest note on top
-      return notes.reverse();
+      const sortedNotes = notes.reverse();
+      return [
+        ...sortedNotes.filter((note) => note.is_pinned),
+        ...sortedNotes.filter((note) => !note.is_pinned),
+      ];
     })
   );
 

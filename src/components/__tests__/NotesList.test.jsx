@@ -23,9 +23,9 @@ describe("Notes List", () => {
       server.use(
         http.get("http://localhost:3000/notes", () => {
           return HttpResponse.json([
-            { id: 1, content: "first" },
-            { id: 2, content: "second" },
-            { id: 3, content: "third" },
+            { id: uuid(), content: "first" },
+            { id: uuid(), content: "second" },
+            { id: uuid(), content: "third" },
           ]);
         })
       );
@@ -38,12 +38,40 @@ describe("Notes List", () => {
         "first",
       ]);
     });
+
+    it("shows pinned notes at the top", async () => {
+      server.use(
+        http.get("http://localhost:3000/notes", () => {
+          return HttpResponse.json([
+            { id: uuid(), content: "first" },
+            { id: uuid(), content: "second", is_pinned: true },
+            { id: uuid(), content: "third" },
+            { id: uuid(), content: "fourth", is_pinned: true },
+            { id: uuid(), content: "fifth" },
+          ]);
+        })
+      );
+      render(<NotesList />, { wrapper: createWrapper() });
+
+      const notes = await screen.findAllByRole("listitem");
+      expect(notes.map((note) => note.textContent)).toEqual([
+        "fourth",
+        "second",
+        "fifth",
+        "third",
+        "first",
+      ]);
+    });
   });
 
   describe("notes CRUD", () => {
     beforeEach(() => {
       const dummyNotes = [
-        { id: 1, title: "Starter note", content: "Let's always have one note" },
+        {
+          id: uuid(),
+          title: "Starter note",
+          content: "Let's always have one note",
+        },
       ];
       server.use(
         http.get("http://localhost:3000/notes", () => {
@@ -59,11 +87,20 @@ describe("Notes List", () => {
           const index = dummyNotes.findIndex((note) => note.id === params.id);
           dummyNotes.splice(index, 1);
           return HttpResponse.json();
-        })
+        }),
+        http.patch(
+          "http://localhost:3000/notes/:id",
+          async ({ params, request }) => {
+            const index = dummyNotes.findIndex((note) => note.id === params.id);
+            const postedNote = await request.json();
+            dummyNotes[index] = { ...dummyNotes[index], ...postedNote };
+            return HttpResponse.json();
+          }
+        )
       );
     });
 
-    it("allows users to add a note", async () => {
+    it("allows adding a note", async () => {
       render(<NotesList />, { wrapper: createWrapper() });
 
       // Create the note
@@ -90,18 +127,47 @@ describe("Notes List", () => {
       expect(screen.getByRole("textbox", { name: "Content" })).toHaveValue("");
     });
 
-    it("allows users to delete a note", async () => {
+    it("allows deleting a note", async () => {
       render(<NotesList />, { wrapper: createWrapper() });
 
       // Get the dummy note and delete it
       const notes = await screen.findAllByRole("listitem");
       expect(notes).toHaveLength(1);
 
-      const deleteButton = within(notes[0]).getByRole("button");
+      const deleteButton = within(notes[0]).getByRole("button", {
+        name: "Delete note",
+      });
       await userEvent.click(deleteButton);
 
       // Check the notes list is now empty
       expect(await screen.queryAllByRole("listitem")).toHaveLength(0);
+    });
+
+    it("allows pinning and unpinning a note", async () => {
+      render(<NotesList />, { wrapper: createWrapper() });
+
+      // Get the dummy note and delete it
+      const notes = await screen.findAllByRole("listitem");
+      expect(notes).toHaveLength(1);
+
+      const pinNoteButton = within(notes[0]).getByRole("button", {
+        name: "Pin note",
+      });
+      await userEvent.click(pinNoteButton);
+
+      // Check the note is now pinned
+      const unpinButton = within(notes[0]).queryByRole("button", {
+        name: "Unpin note",
+      });
+      expect(unpinButton).toBeInTheDocument();
+
+      // Check users can unpin it
+      await userEvent.click(unpinButton);
+      expect(
+        within(notes[0]).queryByRole("button", {
+          name: "Pin note",
+        })
+      ).toBeInTheDocument();
     });
   });
 });
