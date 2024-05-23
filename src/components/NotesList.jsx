@@ -1,6 +1,7 @@
 import { useQuery } from "react-query";
 import AddNote from "./AddNote";
 import { getNotes } from "../api/notes";
+import Note from "./Note";
 
 const NotesList = () => {
   const {
@@ -29,7 +30,7 @@ const NotesList = () => {
 
       <div>{isFetching ? "Updating..." : ""}</div>
       {notes && (
-        <ul>
+        <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
           {notes.map((note) => (
             <li
               key={note.id}
@@ -39,8 +40,7 @@ const NotesList = () => {
                 margin: "5px",
               }}
             >
-              <h4>{note.title}</h4>
-              <p>{note.content}</p>
+              <Note {...note} />
             </li>
           ))}
         </ul>

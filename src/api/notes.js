@@ -11,4 +11,7 @@ const getNotes = () =>
 const postNote = (note) =>
   axios.post(`${import.meta.env.VITE_BACKEND_API_URL}/notes`, note);
 
-export { getNotes, postNote };
+const deleteNote = (noteId) =>
+  axios.delete(`${import.meta.env.VITE_BACKEND_API_URL}/notes/${noteId}`);
+
+export { getNotes, postNote, deleteNote };
