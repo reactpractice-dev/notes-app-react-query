@@ -16,7 +16,7 @@ const AddNote = () => {
       setContent("");
       setError(undefined);
       // Invalidate and refetch
-      return queryClient.invalidateQueries("notes");
+      return queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
     onError: (createError) => {
       setError(createError.response.statusText);

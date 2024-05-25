@@ -12,7 +12,7 @@ const Note = ({ id, title, content, is_pinned }) => {
     onSuccess: () => {
       toast.success("Note successfully deleted");
       // Invalidate and refetch
-      return queryClient.invalidateQueries("notes");
+      return queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
     onError: () => {
       toast.error("There was an error deleting the note");
@@ -24,13 +24,13 @@ const Note = ({ id, title, content, is_pinned }) => {
     // When mutate is called:
     onMutate: async (updatedNote) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries("notes");
+      await queryClient.cancelQueries(["notes"]);
 
       // Snapshot the previous value
-      const previousNotes = queryClient.getQueryData("notes");
+      const previousNotes = queryClient.getQueryData(["notes"]);
 
       // Optimistically update to the new value
-      queryClient.setQueryData("notes", (notes) =>
+      queryClient.setQueryData(["notes"], (notes) =>
         notes.map((n) =>
           n.id === updatedNote.id
             ? { ...n, is_pinned: updatedNote.is_pinned }
@@ -43,11 +43,11 @@ const Note = ({ id, title, content, is_pinned }) => {
     },
     // If the mutation fails, use the context returned from onMutate to roll back
     onError: (err, updatedNote, context) => {
-      queryClient.setQueryData("notes", context.previousNotes);
+      queryClient.setQueryData(["notes"], context.previousNotes);
     },
     // Always refetch after error or success:
     onSettled: () => {
-      queryClient.invalidateQueries("notes");
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
   return (
