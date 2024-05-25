@@ -126,129 +126,137 @@ describe("Notes List", () => {
       );
     });
 
-    it("allows adding a note", async () => {
-      render(<NotesList />, { wrapper: createWrapper() });
+    describe("adding notes", () => {
+      it("allows adding a note", async () => {
+        render(<NotesList />, { wrapper: createWrapper() });
 
-      // Create the note
-      await userEvent.type(
-        await screen.findByRole("textbox", { name: "Title" }),
-        "Testing"
-      );
-      await userEvent.type(
-        screen.getByRole("textbox", { name: "Content" }),
-        "Don't forget to check the tests"
-      );
-      // click the button, but don't wait for the action to finish
-      // so we can check the button text changes when loading
-      userEvent.click(screen.getByRole("button", { name: "Add note" }));
+        // Create the note
+        await userEvent.type(
+          await screen.findByRole("textbox", { name: "Title" }),
+          "Testing"
+        );
+        await userEvent.type(
+          screen.getByRole("textbox", { name: "Content" }),
+          "Don't forget to check the tests"
+        );
+        // click the button, but don't wait for the action to finish
+        // so we can check the button text changes when loading
+        userEvent.click(screen.getByRole("button", { name: "Add note" }));
 
-      // check the button becomes disabled and says 'Adding note'
-      await waitFor(() => {
+        // check the button becomes disabled and says 'Adding note'
+        await waitFor(() => {
+          expect(
+            screen.getByRole("button", { name: /Adding note/i })
+          ).toBeDisabled();
+        });
+
+        // Check new note is displayed in the notes list
+        const notes = await screen.findAllByRole("listitem");
+        expect(notes).toHaveLength(2);
+        expect(within(notes[0]).getByText("Testing")).toBeInTheDocument();
         expect(
-          screen.getByRole("button", { name: /Adding note/i })
-        ).toBeDisabled();
+          within(notes[0]).getByText("Don't forget to check the tests")
+        ).toBeInTheDocument();
+
+        // Check the form is now cleared
+        expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("");
+        expect(screen.getByRole("textbox", { name: "Content" })).toHaveValue(
+          ""
+        );
       });
 
-      // Check new note is displayed in the notes list
-      const notes = await screen.findAllByRole("listitem");
-      expect(notes).toHaveLength(2);
-      expect(within(notes[0]).getByText("Testing")).toBeInTheDocument();
-      expect(
-        within(notes[0]).getByText("Don't forget to check the tests")
-      ).toBeInTheDocument();
+      it("shows an error if adding a note failed", async () => {
+        server.use(
+          http.post("http://localhost:3000/notes", async () => {
+            delay();
+            return HttpResponse.json(null, { status: 500 });
+          })
+        );
 
-      // Check the form is now cleared
-      expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("");
-      expect(screen.getByRole("textbox", { name: "Content" })).toHaveValue("");
+        render(<NotesList />, { wrapper: createWrapper() });
+
+        // Create the note
+        await userEvent.type(
+          await screen.findByRole("textbox", { name: "Title" }),
+          "Testing"
+        );
+        await userEvent.type(
+          screen.getByRole("textbox", { name: "Content" }),
+          "Don't forget to check the tests"
+        );
+        // click the button, but don't wait for the action to finish
+        // so we can check the button text changes when loading
+        userEvent.click(screen.getByRole("button", { name: "Add note" }));
+
+        // check the button becomes disabled and says 'Adding note'
+        await waitFor(() => {
+          expect(
+            screen.getByRole("button", { name: /Adding note/i })
+          ).toBeDisabled();
+        });
+
+        // Check that an error message is displayed
+        expect(screen.getByText("Internal Server Error")).toBeInTheDocument();
+
+        // Check notes list still has just one item
+        const notes = await screen.findAllByRole("listitem");
+        expect(notes).toHaveLength(1);
+
+        // Check the form is NOT cleared
+        expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue(
+          "Testing"
+        );
+        expect(screen.getByRole("textbox", { name: "Content" })).toHaveValue(
+          "Don't forget to check the tests"
+        );
+      });
     });
 
-    it("allows deleting a note", async () => {
-      render(<NotesList />, { wrapper: createWrapper() });
+    describe("deleting notes", () => {
+      it("allows deleting a note", async () => {
+        render(<NotesList />, { wrapper: createWrapper() });
 
-      // Get the dummy note and delete it
-      const notes = await screen.findAllByRole("listitem");
-      expect(notes).toHaveLength(1);
+        // Get the dummy note and delete it
+        const notes = await screen.findAllByRole("listitem");
+        expect(notes).toHaveLength(1);
 
-      const deleteButton = within(notes[0]).getByRole("button", {
-        name: "Delete note",
+        const deleteButton = within(notes[0]).getByRole("button", {
+          name: "Delete note",
+        });
+        await userEvent.click(deleteButton);
+
+        // Check the notes list is now empty
+        expect(await screen.queryAllByRole("listitem")).toHaveLength(0);
       });
-      await userEvent.click(deleteButton);
-
-      // Check the notes list is now empty
-      expect(await screen.queryAllByRole("listitem")).toHaveLength(0);
     });
 
-    it("allows pinning and unpinning a note", async () => {
-      render(<NotesList />, { wrapper: createWrapper() });
+    describe("pinning notes", () => {
+      it("allows pinning and unpinning a note", async () => {
+        render(<NotesList />, { wrapper: createWrapper() });
 
-      // Get the dummy note and delete it
-      const notes = await screen.findAllByRole("listitem");
-      expect(notes).toHaveLength(1);
+        // Get the dummy note and delete it
+        const notes = await screen.findAllByRole("listitem");
+        expect(notes).toHaveLength(1);
 
-      const pinNoteButton = within(notes[0]).getByRole("button", {
-        name: "Pin note",
-      });
-      await userEvent.click(pinNoteButton);
-
-      // Check the note is now pinned
-      const unpinButton = within(notes[0]).queryByRole("button", {
-        name: "Unpin note",
-      });
-      expect(unpinButton).toBeInTheDocument();
-
-      // Check users can unpin it
-      await userEvent.click(unpinButton);
-      expect(
-        within(notes[0]).queryByRole("button", {
+        const pinNoteButton = within(notes[0]).getByRole("button", {
           name: "Pin note",
-        })
-      ).toBeInTheDocument();
-    });
+        });
+        await userEvent.click(pinNoteButton);
 
-    it("shows an error if adding a note failed", async () => {
-      server.use(
-        http.post("http://localhost:3000/notes", async () => {
-          delay();
-          return HttpResponse.json(null, { status: 500 });
-        })
-      );
+        // Check the note is now pinned
+        const unpinButton = within(notes[0]).queryByRole("button", {
+          name: "Unpin note",
+        });
+        expect(unpinButton).toBeInTheDocument();
 
-      render(<NotesList />, { wrapper: createWrapper() });
-
-      // Create the note
-      await userEvent.type(
-        await screen.findByRole("textbox", { name: "Title" }),
-        "Testing"
-      );
-      await userEvent.type(
-        screen.getByRole("textbox", { name: "Content" }),
-        "Don't forget to check the tests"
-      );
-      // click the button, but don't wait for the action to finish
-      // so we can check the button text changes when loading
-      userEvent.click(screen.getByRole("button", { name: "Add note" }));
-
-      // check the button becomes disabled and says 'Adding note'
-      await waitFor(() => {
+        // Check users can unpin it
+        await userEvent.click(unpinButton);
         expect(
-          screen.getByRole("button", { name: /Adding note/i })
-        ).toBeDisabled();
+          within(notes[0]).queryByRole("button", {
+            name: "Pin note",
+          })
+        ).toBeInTheDocument();
       });
-
-      // Check that an error message is displayed
-      expect(screen.getByText("Internal Server Error")).toBeInTheDocument();
-
-      // Check notes list still has just one item
-      const notes = await screen.findAllByRole("listitem");
-      expect(notes).toHaveLength(1);
-
-      // Check the form is NOT cleared
-      expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue(
-        "Testing"
-      );
-      expect(screen.getByRole("textbox", { name: "Content" })).toHaveValue(
-        "Don't forget to check the tests"
-      );
     });
   });
 });
