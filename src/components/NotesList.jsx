@@ -9,16 +9,7 @@ const NotesList = () => {
     error,
     data: notes,
     isFetching,
-  } = useQuery("notes", () =>
-    getNotes().then((notes) => {
-      // reverse data so we always show latest note on top
-      const sortedNotes = notes.reverse();
-      return [
-        ...sortedNotes.filter((note) => note.is_pinned),
-        ...sortedNotes.filter((note) => !note.is_pinned),
-      ];
-    })
-  );
+  } = useQuery("notes", getNotes);
 
   if (isLoading) return "Loading...";
 
@@ -26,6 +17,13 @@ const NotesList = () => {
     return (
       <p style={{ color: "red" }}> An error has occurred: {error.message}</p>
     );
+
+  // reverse data so we always show latest note on top
+  const sortedNotes = notes.reverse();
+  const notesWithPinnedOnTop = [
+    ...sortedNotes.filter((note) => note.is_pinned),
+    ...sortedNotes.filter((note) => !note.is_pinned),
+  ];
 
   return (
     <div style={{ maxWidth: "500px", margin: "auto" }}>
@@ -35,7 +33,7 @@ const NotesList = () => {
       <div>{isFetching ? "Updating..." : ""}</div>
       {notes && (
         <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
-          {notes.map((note) => (
+          {notesWithPinnedOnTop.map((note) => (
             <li
               key={note.id}
               style={{
