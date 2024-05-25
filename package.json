@@ -12,13 +12,13 @@
     "backend-server": "json-server db.json"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.38.0",
     "axios": "^1.7.2",
     "json-server": "^1.0.0-beta.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "react-icons": "^5.2.1",
-    "react-query": "^3.39.3"
+    "react-icons": "^5.2.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.5",

@@ -1,5 +1,5 @@
 import { BsFillTrash3Fill } from "react-icons/bs";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteNote, patchNote } from "../api/notes";
 import { BsPin } from "react-icons/bs";
 import { BsPinFill } from "react-icons/bs";
@@ -7,7 +7,8 @@ import toast from "react-hot-toast";
 
 const Note = ({ id, title, content, is_pinned }) => {
   const queryClient = useQueryClient();
-  const deleteNoteMutation = useMutation(deleteNote, {
+  const deleteNoteMutation = useMutation({
+    mutationFn: deleteNote,
     onSuccess: () => {
       toast.success("Note successfully deleted");
       // Invalidate and refetch
@@ -18,7 +19,8 @@ const Note = ({ id, title, content, is_pinned }) => {
     },
   });
 
-  const pinNoteMutation = useMutation(patchNote, {
+  const pinNoteMutation = useMutation({
+    mutationFn: patchNote,
     // When mutate is called:
     onMutate: async (updatedNote) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -74,10 +76,10 @@ const Note = ({ id, title, content, is_pinned }) => {
       <p>{content}</p>
       <div style={{ textAlign: "right" }}>
         <button
-          disabled={deleteNoteMutation.isLoading}
+          disabled={deleteNoteMutation.isPending}
           onClick={() => deleteNoteMutation.mutate(id)}
           style={{ padding: "6px", paddingBottom: "2px" }}
-          title={deleteNoteMutation.isLoading ? "Deleting note" : "Delete note"}
+          title={deleteNoteMutation.isPending ? "Deleting note" : "Delete note"}
         >
           <BsFillTrash3Fill />
         </button>

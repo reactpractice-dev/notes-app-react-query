@@ -10,14 +10,9 @@ import server from "../../../tests/mock-api-server";
 
 import NotesList from "../NotesList";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider, setLogger } from "react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { v4 as uuid } from "uuid";
 import toast, { Toaster } from "react-hot-toast";
-
-// prevent axios from logging errors
-// for requests that we explicitly failed in tests using msw
-// https://stackoverflow.com/questions/66404728/how-do-i-suppress-expected-axios-error-messages-when-testing-error-states-with-r
-setLogger({ error: () => {} });
 
 // see https://tkdodo.eu/blog/testing-react-query for details
 // on testing components that use react query

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { postNote } from "../api/notes";
 
@@ -8,7 +8,8 @@ const AddNote = () => {
   const [error, setError] = useState();
 
   const queryClient = useQueryClient();
-  const createNoteMutation = useMutation(postNote, {
+  const createNoteMutation = useMutation({
+    mutationFn: postNote,
     onSuccess: () => {
       // Clear form values
       setTitle("");
@@ -62,8 +63,8 @@ const AddNote = () => {
         value={content}
         onChange={(e) => setContent(e.target.value)}
       ></textarea>
-      <button type="submit" disabled={createNoteMutation.isLoading}>
-        {createNoteMutation.isLoading ? "Adding note" : "Add note"}
+      <button type="submit" disabled={createNoteMutation.isPending}>
+        {createNoteMutation.isPending ? "Adding note" : "Add note"}
       </button>
     </form>
   );
