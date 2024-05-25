@@ -17,9 +17,9 @@ const NotesList = () => {
     return (
       <p style={{ color: "red" }}> An error has occurred: {error.message}</p>
     );
-
   // reverse data so we always show latest note on top
-  const sortedNotes = notes.reverse();
+  // clone array first, since `reverse` mutates the original value
+  const sortedNotes = [...notes].reverse();
   const notesWithPinnedOnTop = [
     ...sortedNotes.filter((note) => note.is_pinned),
     ...sortedNotes.filter((note) => !note.is_pinned),
