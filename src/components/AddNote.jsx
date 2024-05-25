@@ -17,6 +17,9 @@ const AddNote = () => {
       setContent("");
       setError(undefined);
     },
+    onError: (createError) => {
+      setError(createError.response.statusText);
+    },
   });
 
   const handleSubmit = (e) => {

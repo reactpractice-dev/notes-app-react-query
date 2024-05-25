@@ -104,9 +104,7 @@ describe("Notes List", () => {
           const postedNote = await request.json();
           postedNote.id = uuid();
           dummyNotes.push(postedNote);
-          console.log("ONE");
           delay();
-          console.log("TWO");
           return HttpResponse.json(postedNote);
         }),
         http.delete("http://localhost:3000/notes/:id", async ({ params }) => {
@@ -205,6 +203,52 @@ describe("Notes List", () => {
           name: "Pin note",
         })
       ).toBeInTheDocument();
+    });
+
+    it("shows an error if adding a note failed", async () => {
+      server.use(
+        http.post("http://localhost:3000/notes", async () => {
+          delay();
+          return HttpResponse.json(null, { status: 500 });
+        })
+      );
+
+      render(<NotesList />, { wrapper: createWrapper() });
+
+      // Create the note
+      await userEvent.type(
+        await screen.findByRole("textbox", { name: "Title" }),
+        "Testing"
+      );
+      await userEvent.type(
+        screen.getByRole("textbox", { name: "Content" }),
+        "Don't forget to check the tests"
+      );
+      // click the button, but don't wait for the action to finish
+      // so we can check the button text changes when loading
+      userEvent.click(screen.getByRole("button", { name: "Add note" }));
+
+      // check the button becomes disabled and says 'Adding note'
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: /Adding note/i })
+        ).toBeDisabled();
+      });
+
+      // Check that an error message is displayed
+      expect(screen.getByText("Internal Server Error")).toBeInTheDocument();
+
+      // Check notes list still has just one item
+      const notes = await screen.findAllByRole("listitem");
+      expect(notes).toHaveLength(1);
+
+      // Check the form is NOT cleared
+      expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue(
+        "Testing"
+      );
+      expect(screen.getByRole("textbox", { name: "Content" })).toHaveValue(
+        "Don't forget to check the tests"
+      );
     });
   });
 });
