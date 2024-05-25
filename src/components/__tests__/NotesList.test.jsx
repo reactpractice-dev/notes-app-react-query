@@ -127,7 +127,7 @@ describe("Notes List", () => {
     });
 
     describe("adding notes", () => {
-      it("allows adding a note", async () => {
+      it("shows a loading state as the note is being added", async () => {
         render(<NotesList />, { wrapper: createWrapper() });
 
         // Create the note
@@ -149,6 +149,20 @@ describe("Notes List", () => {
             screen.getByRole("button", { name: /Adding note/i })
           ).toBeDisabled();
         });
+      });
+      it("allows adding a note", async () => {
+        render(<NotesList />, { wrapper: createWrapper() });
+
+        // Create the note
+        await userEvent.type(
+          await screen.findByRole("textbox", { name: "Title" }),
+          "Testing"
+        );
+        await userEvent.type(
+          screen.getByRole("textbox", { name: "Content" }),
+          "Don't forget to check the tests"
+        );
+        await userEvent.click(screen.getByRole("button", { name: "Add note" }));
 
         // Check new note is displayed in the notes list
         const notes = await screen.findAllByRole("listitem");
@@ -184,16 +198,7 @@ describe("Notes List", () => {
           screen.getByRole("textbox", { name: "Content" }),
           "Don't forget to check the tests"
         );
-        // click the button, but don't wait for the action to finish
-        // so we can check the button text changes when loading
-        userEvent.click(screen.getByRole("button", { name: "Add note" }));
-
-        // check the button becomes disabled and says 'Adding note'
-        await waitFor(() => {
-          expect(
-            screen.getByRole("button", { name: /Adding note/i })
-          ).toBeDisabled();
-        });
+        await userEvent.click(screen.getByRole("button", { name: "Add note" }));
 
         // Check that an error message is displayed
         expect(screen.getByText("Internal Server Error")).toBeInTheDocument();
@@ -213,13 +218,51 @@ describe("Notes List", () => {
     });
 
     describe("deleting notes", () => {
+      it("shows a loading icon as the note is being deleted", async () => {
+        render(<NotesList />, { wrapper: createWrapper() });
+
+        // Get the dummy note and delete it
+        const notes = await screen.findAllByRole("listitem");
+        const deleteButton = within(notes[0]).getByRole("button", {
+          name: "Delete note",
+        });
+        // click the button, but don't wait for the action to finish
+        // so we can check the button text changes when loading
+        userEvent.click(deleteButton);
+
+        // check the button becomes disabled and says 'Deleting note'
+        await waitFor(() => {
+          expect(
+            screen.getByRole("button", { name: /Deleting note/i })
+          ).toBeDisabled();
+        });
+      });
+
       it("allows deleting a note", async () => {
         render(<NotesList />, { wrapper: createWrapper() });
 
         // Get the dummy note and delete it
         const notes = await screen.findAllByRole("listitem");
-        expect(notes).toHaveLength(1);
+        const deleteButton = within(notes[0]).getByRole("button", {
+          name: "Delete note",
+        });
+        await userEvent.click(deleteButton);
 
+        // Check the notes list is now empty
+        expect(await screen.queryAllByRole("listitem")).toHaveLength(0);
+      });
+
+      it("shows an error if deleting a note failed", async () => {
+        server.use(
+          http.delete("http://localhost:3000/notes/:id", async () => {
+            delay();
+            return HttpResponse.json({ status: 500 });
+          })
+        );
+        render(<NotesList />, { wrapper: createWrapper() });
+
+        // Get the dummy note and delete it
+        const notes = await screen.findAllByRole("listitem");
         const deleteButton = within(notes[0]).getByRole("button", {
           name: "Delete note",
         });

@@ -9,14 +9,14 @@ const Note = ({ id, title, content, is_pinned }) => {
   const deleteNoteMutation = useMutation(deleteNote, {
     onSuccess: () => {
       // Invalidate and refetch
-      queryClient.invalidateQueries("notes");
+      return queryClient.invalidateQueries("notes");
     },
   });
 
   const patchNoteMutation = useMutation(patchNote, {
     onSuccess: () => {
       // Invalidate and refetch
-      queryClient.invalidateQueries("notes");
+      return queryClient.invalidateQueries("notes");
     },
   });
   return (
@@ -47,9 +47,10 @@ const Note = ({ id, title, content, is_pinned }) => {
       <p>{content}</p>
       <div style={{ textAlign: "right" }}>
         <button
+          disabled={deleteNoteMutation.isLoading}
           onClick={() => deleteNoteMutation.mutate(id)}
           style={{ padding: "6px", paddingBottom: "2px" }}
-          title="Delete note"
+          title={deleteNoteMutation.isLoading ? "Deleting note" : "Delete note"}
         >
           <BsFillTrash3Fill />
         </button>
