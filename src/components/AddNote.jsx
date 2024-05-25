@@ -10,12 +10,12 @@ const AddNote = () => {
   const queryClient = useQueryClient();
   const createNoteMutation = useMutation(postNote, {
     onSuccess: () => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries("notes");
       // Clear form values
       setTitle("");
       setContent("");
       setError(undefined);
+      // Invalidate and refetch
+      return queryClient.invalidateQueries("notes");
     },
     onError: (createError) => {
       setError(createError.response.statusText);
