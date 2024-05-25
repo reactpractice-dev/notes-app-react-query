@@ -11,3 +11,19 @@ afterEach(() => {
   cleanup();
 });
 afterAll(() => server.close());
+
+// Fix "TypeError: matchMedia is not a function"
+// cause by using `react-hot-toast` in testing environment
+// error is caused by `matchMedia` not being implement in jsdom
+// solution is to just mock it (see https://github.com/chakra-ui/chakra-ui/discussions/6664)
+const matchMediaMock = vi.fn((query) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+}));
+vi.stubGlobal("matchMedia", matchMediaMock);

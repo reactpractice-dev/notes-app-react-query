@@ -10,8 +10,14 @@ import server from "../../../tests/mock-api-server";
 
 import NotesList from "../NotesList";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClient, QueryClientProvider, setLogger } from "react-query";
 import { v4 as uuid } from "uuid";
+import toast, { Toaster } from "react-hot-toast";
+
+// prevent axios from logging errors
+// for requests that we explicitly failed in tests using msw
+// https://stackoverflow.com/questions/66404728/how-do-i-suppress-expected-axios-error-messages-when-testing-error-states-with-r
+setLogger({ error: () => {} });
 
 // see https://tkdodo.eu/blog/testing-react-query for details
 // on testing components that use react query
@@ -19,11 +25,18 @@ const createWrapper = () => {
   const queryClient = new QueryClient();
   // eslint-disable-next-line react/display-name
   return ({ children }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <Toaster />
+      {children}
+    </QueryClientProvider>
   );
 };
 
 describe("Notes List", () => {
+  beforeEach(() => {
+    // remove all toasts before each test
+    toast.remove();
+  });
   describe("viewing notes", () => {
     it("shows a loading indicator before the notes are ready", async () => {
       server.use(
@@ -256,7 +269,7 @@ describe("Notes List", () => {
         server.use(
           http.delete("http://localhost:3000/notes/:id", async () => {
             delay();
-            return HttpResponse.json({ status: 500 });
+            return HttpResponse.json(null, { status: 500 });
           })
         );
         render(<NotesList />, { wrapper: createWrapper() });
@@ -268,8 +281,12 @@ describe("Notes List", () => {
         });
         await userEvent.click(deleteButton);
 
+        expect(await screen.getByRole("status")).toHaveTextContent(
+          "There was an error deleting the note"
+        );
+
         // Check the notes list is now empty
-        expect(await screen.queryAllByRole("listitem")).toHaveLength(0);
+        expect(await screen.queryAllByRole("listitem")).toHaveLength(1);
       });
     });
 
