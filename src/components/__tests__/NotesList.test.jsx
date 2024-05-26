@@ -119,6 +119,9 @@ describe("Notes List", () => {
           const index = dummyNotes.findIndex((note) => note.id === params.id);
           dummyNotes.splice(index, 1);
           delay();
+          // wait one tick, to allow the loading state to show
+          // https://github.com/TanStack/query/issues/4379
+          await new Promise((resolve) => setTimeout(resolve, 0));
           return HttpResponse.json();
         }),
         http.patch(
@@ -257,7 +260,9 @@ describe("Notes List", () => {
         await userEvent.click(deleteButton);
 
         // Check the notes list is now empty
-        expect(await screen.queryAllByRole("listitem")).toHaveLength(0);
+        await waitFor(() =>
+          expect(screen.queryAllByRole("listitem")).toHaveLength(0)
+        );
       });
 
       it("shows an error if deleting a note failed", async () => {
