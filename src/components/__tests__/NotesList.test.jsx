@@ -4,6 +4,7 @@ import {
   waitForElementToBeRemoved,
   within,
   waitFor,
+  act,
 } from "@testing-library/react";
 import { delay, http, HttpResponse } from "msw";
 import server from "../../../tests/mock-api-server";
@@ -159,6 +160,14 @@ describe("Notes List", () => {
           expect(
             screen.getByRole("button", { name: /Adding note/i })
           ).toBeDisabled();
+        });
+
+        // prevent warning
+        // Warning: An update to NotesList inside a test was not wrapped in act(...).
+        // should have checked for another state change, but can't tell what
+        // see https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve));
         });
       });
       it("allows adding a note", async () => {
