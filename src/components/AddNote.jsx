@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCreateNote } from "../api/create-note";
+import toast from "react-hot-toast";
 
 const AddNote = () => {
   const [title, setTitle] = useState("");
@@ -20,12 +21,14 @@ const AddNote = () => {
       { title, content },
       {
         onSuccess: () => {
+          toast.success("Note successfully added");
           // Clear form values
           setTitle("");
           setContent("");
           setError(undefined);
         },
         onError: (createError) => {
+          toast.error("There was an error adding the note");
           setError(createError.response.statusText);
         },
       }

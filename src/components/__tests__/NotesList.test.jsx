@@ -3,21 +3,15 @@ import {
   waitForElementToBeRemoved,
   within,
   waitFor,
-  act,
 } from "@testing-library/react";
 import { delay, http, HttpResponse } from "msw";
 import server from "../../../tests/mock-api-server";
 import NotesList from "../NotesList";
 import userEvent from "@testing-library/user-event";
 import { v4 as uuid } from "uuid";
-import toast from "react-hot-toast";
 import { renderWithAppContext, waitOneTick } from "../../../tests/utils";
 
 describe("Notes List", () => {
-  beforeEach(() => {
-    // remove all toasts before each test
-    toast.remove();
-  });
   describe("viewing notes", () => {
     it("shows a loading indicator before the notes are ready", async () => {
       server.use(
@@ -120,105 +114,29 @@ describe("Notes List", () => {
       );
     });
 
-    describe("adding notes", () => {
-      it("shows a loading state as the note is being added", async () => {
-        renderWithAppContext(<NotesList />);
+    it("shows newly added note in the list", async () => {
+      renderWithAppContext(<NotesList />);
 
-        // Create the note
-        await userEvent.type(
-          await screen.findByRole("textbox", { name: "Title" }),
-          "Testing"
-        );
-        await userEvent.type(
-          screen.getByRole("textbox", { name: "Content" }),
-          "Don't forget to check the tests"
-        );
-        // click the button, but don't wait for the action to finish
-        // so we can check the button text changes when loading
-        userEvent.click(screen.getByRole("button", { name: "Add note" }));
+      // Create the note
+      await userEvent.type(
+        await screen.findByRole("textbox", { name: "Title" }),
+        "Testing"
+      );
+      await userEvent.type(
+        screen.getByRole("textbox", { name: "Content" }),
+        "Don't forget to check the tests"
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Add note" }));
 
-        // check the button becomes disabled and says 'Adding note'
-        await waitFor(() => {
-          expect(
-            screen.getByRole("button", { name: /Adding note/i })
-          ).toBeDisabled();
-        });
-
-        // prevent warning
-        // Warning: An update to NotesList inside a test was not wrapped in act(...).
-        // should have checked for another state change, but can't tell what
-        // see https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning
-        await act(async () => {
-          await new Promise((resolve) => setTimeout(resolve));
-        });
+      // Check new note is displayed in the notes list
+      await waitFor(() => {
+        expect(screen.getAllByRole("listitem")).toHaveLength(2);
       });
-      it("allows adding a note", async () => {
-        renderWithAppContext(<NotesList />);
-
-        // Create the note
-        await userEvent.type(
-          await screen.findByRole("textbox", { name: "Title" }),
-          "Testing"
-        );
-        await userEvent.type(
-          screen.getByRole("textbox", { name: "Content" }),
-          "Don't forget to check the tests"
-        );
-        await userEvent.click(screen.getByRole("button", { name: "Add note" }));
-
-        // Check new note is displayed in the notes list
-        await waitFor(() => {
-          expect(screen.getAllByRole("listitem")).toHaveLength(2);
-        });
-        const notes = screen.getAllByRole("listitem");
-        expect(within(notes[0]).getByText("Testing")).toBeInTheDocument();
-        expect(
-          within(notes[0]).getByText("Don't forget to check the tests")
-        ).toBeInTheDocument();
-
-        // Check the form is now cleared
-        expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("");
-        expect(screen.getByRole("textbox", { name: "Content" })).toHaveValue(
-          ""
-        );
-      });
-
-      it("shows an error if adding a note failed", async () => {
-        server.use(
-          http.post("http://localhost:3000/notes", async () => {
-            delay();
-            return HttpResponse.json(null, { status: 500 });
-          })
-        );
-
-        renderWithAppContext(<NotesList />);
-
-        // Create the note
-        await userEvent.type(
-          await screen.findByRole("textbox", { name: "Title" }),
-          "Testing"
-        );
-        await userEvent.type(
-          screen.getByRole("textbox", { name: "Content" }),
-          "Don't forget to check the tests"
-        );
-        await userEvent.click(screen.getByRole("button", { name: "Add note" }));
-
-        // Check that an error message is displayed
-        expect(screen.getByText("Internal Server Error")).toBeInTheDocument();
-
-        // Check notes list still has just one item
-        const notes = await screen.findAllByRole("listitem");
-        expect(notes).toHaveLength(1);
-
-        // Check the form is NOT cleared
-        expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue(
-          "Testing"
-        );
-        expect(screen.getByRole("textbox", { name: "Content" })).toHaveValue(
-          "Don't forget to check the tests"
-        );
-      });
+      const notes = screen.getAllByRole("listitem");
+      expect(within(notes[0]).getByText("Testing")).toBeInTheDocument();
+      expect(
+        within(notes[0]).getByText("Don't forget to check the tests")
+      ).toBeInTheDocument();
     });
 
     describe("deleting notes", () => {

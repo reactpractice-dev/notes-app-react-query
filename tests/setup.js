@@ -2,9 +2,14 @@ import { expect, afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import * as matchers from "@testing-library/jest-dom/matchers";
 import server from "./mock-api-server";
+import toast from "react-hot-toast";
 
 expect.extend(matchers);
 
+beforeEach(() => {
+  // remove all toasts before each test
+  toast.remove();
+});
 beforeAll(() => server.listen());
 afterEach(() => {
   server.resetHandlers();
