@@ -1,15 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
 import AddNote from "./AddNote";
-import { getNotes } from "../api/notes";
 import Note from "./Note";
+import { useNotes } from "../api/get-notes";
 
 const NotesList = () => {
-  const {
-    isPending,
-    error,
-    data: notes,
-    isFetching,
-  } = useQuery({ queryKey: ["notes"], queryFn: getNotes });
+  const { isPending, error, data: notes, isFetching } = useNotes();
 
   if (isPending) return "Loading...";
 

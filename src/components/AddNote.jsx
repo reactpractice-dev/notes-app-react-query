@@ -1,27 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { postNote } from "../api/notes";
+import { useCreateNote } from "../api/create-note";
 
 const AddNote = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState();
 
-  const queryClient = useQueryClient();
-  const createNoteMutation = useMutation({
-    mutationFn: postNote,
-    onSuccess: () => {
-      // Clear form values
-      setTitle("");
-      setContent("");
-      setError(undefined);
-      // Invalidate and refetch
-      return queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-    onError: (createError) => {
-      setError(createError.response.statusText);
-    },
-  });
+  const createNoteMutation = useCreateNote();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -31,7 +16,20 @@ const AddNote = () => {
       );
       return;
     }
-    createNoteMutation.mutate({ title, content });
+    createNoteMutation.mutate(
+      { title, content },
+      {
+        onSuccess: () => {
+          // Clear form values
+          setTitle("");
+          setContent("");
+          setError(undefined);
+        },
+        onError: (createError) => {
+          setError(createError.response.statusText);
+        },
+      }
+    );
   };
 
   return (

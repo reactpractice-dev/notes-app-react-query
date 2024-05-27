@@ -1,55 +1,14 @@
 import { BsFillTrash3Fill } from "react-icons/bs";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteNote, patchNote } from "../api/notes";
 import { BsPin } from "react-icons/bs";
 import { BsPinFill } from "react-icons/bs";
 import toast from "react-hot-toast";
+import { usePinNote } from "../api/pin-note";
+import { useDeleteNote } from "../api/delete-note";
 
 const Note = ({ id, title, content, is_pinned }) => {
-  const queryClient = useQueryClient();
-  const deleteNoteMutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      toast.success("Note successfully deleted");
-      // Invalidate and refetch
-      return queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-    onError: () => {
-      toast.error("There was an error deleting the note");
-    },
-  });
+  const deleteNoteMutation = useDeleteNote();
+  const pinNoteMutation = usePinNote();
 
-  const pinNoteMutation = useMutation({
-    mutationFn: patchNote,
-    // When mutate is called:
-    onMutate: async (updatedNote) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries(["notes"]);
-
-      // Snapshot the previous value
-      const previousNotes = queryClient.getQueryData(["notes"]);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(["notes"], (notes) =>
-        notes.map((n) =>
-          n.id === updatedNote.id
-            ? { ...n, is_pinned: updatedNote.is_pinned }
-            : n
-        )
-      );
-
-      // Return a context object with the snapshotted value
-      return { previousNotes };
-    },
-    // If the mutation fails, use the context returned from onMutate to roll back
-    onError: (err, updatedNote, context) => {
-      queryClient.setQueryData(["notes"], context.previousNotes);
-    },
-    // Always refetch after error or success:
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
   return (
     <>
       <div
@@ -77,7 +36,16 @@ const Note = ({ id, title, content, is_pinned }) => {
       <div style={{ textAlign: "right" }}>
         <button
           disabled={deleteNoteMutation.isPending}
-          onClick={() => deleteNoteMutation.mutate(id)}
+          onClick={() =>
+            deleteNoteMutation.mutate(id, {
+              onSuccess: () => {
+                toast.success("Note successfully deleted");
+              },
+              onError: () => {
+                toast.error("There was an error deleting the note");
+              },
+            })
+          }
           style={{ padding: "6px", paddingBottom: "2px" }}
           title={deleteNoteMutation.isPending ? "Deleting note" : "Delete note"}
         >
