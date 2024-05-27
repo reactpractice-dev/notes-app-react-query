@@ -1,5 +1,4 @@
 import {
-  render,
   screen,
   waitForElementToBeRemoved,
   within,
@@ -8,31 +7,11 @@ import {
 } from "@testing-library/react";
 import { delay, http, HttpResponse } from "msw";
 import server from "../../../tests/mock-api-server";
-
 import NotesList from "../NotesList";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { v4 as uuid } from "uuid";
-import toast, { Toaster } from "react-hot-toast";
-
-// see https://tkdodo.eu/blog/testing-react-query for details
-// on testing components that use react query
-const createWrapper = () => {
-  const queryClient = new QueryClient();
-  // eslint-disable-next-line react/display-name
-  return ({ children }) => (
-    <QueryClientProvider client={queryClient}>
-      <Toaster />
-      {children}
-    </QueryClientProvider>
-  );
-};
-
-const waitOneTick = async () => {
-  // wait one tick, to allow the loading state to show
-  // https://github.com/TanStack/query/issues/4379
-  await new Promise((resolve) => setTimeout(resolve, 0));
-};
+import toast from "react-hot-toast";
+import { renderWithAppContext, waitOneTick } from "../../../tests/utils";
 
 describe("Notes List", () => {
   beforeEach(() => {
@@ -47,7 +26,7 @@ describe("Notes List", () => {
           return HttpResponse.json([{ id: uuid(), content: "hello tests" }]);
         })
       );
-      render(<NotesList />, { wrapper: createWrapper() });
+      renderWithAppContext(<NotesList />);
 
       await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
 
@@ -65,7 +44,7 @@ describe("Notes List", () => {
           ]);
         })
       );
-      render(<NotesList />, { wrapper: createWrapper() });
+      renderWithAppContext(<NotesList />);
 
       await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
 
@@ -89,7 +68,7 @@ describe("Notes List", () => {
           ]);
         })
       );
-      render(<NotesList />, { wrapper: createWrapper() });
+      renderWithAppContext(<NotesList />);
 
       const notes = await screen.findAllByRole("listitem");
       expect(notes.map((note) => note.textContent)).toEqual([
@@ -143,7 +122,7 @@ describe("Notes List", () => {
 
     describe("adding notes", () => {
       it("shows a loading state as the note is being added", async () => {
-        render(<NotesList />, { wrapper: createWrapper() });
+        renderWithAppContext(<NotesList />);
 
         // Create the note
         await userEvent.type(
@@ -174,7 +153,7 @@ describe("Notes List", () => {
         });
       });
       it("allows adding a note", async () => {
-        render(<NotesList />, { wrapper: createWrapper() });
+        renderWithAppContext(<NotesList />);
 
         // Create the note
         await userEvent.type(
@@ -212,7 +191,7 @@ describe("Notes List", () => {
           })
         );
 
-        render(<NotesList />, { wrapper: createWrapper() });
+        renderWithAppContext(<NotesList />);
 
         // Create the note
         await userEvent.type(
@@ -244,7 +223,7 @@ describe("Notes List", () => {
 
     describe("deleting notes", () => {
       it("shows a loading icon as the note is being deleted", async () => {
-        render(<NotesList />, { wrapper: createWrapper() });
+        renderWithAppContext(<NotesList />);
 
         // Get the dummy note and delete it
         const notes = await screen.findAllByRole("listitem");
@@ -264,7 +243,7 @@ describe("Notes List", () => {
       });
 
       it("allows deleting a note", async () => {
-        render(<NotesList />, { wrapper: createWrapper() });
+        renderWithAppContext(<NotesList />);
 
         // Get the dummy note and delete it
         const notes = await screen.findAllByRole("listitem");
@@ -286,7 +265,7 @@ describe("Notes List", () => {
             return HttpResponse.json(null, { status: 500 });
           })
         );
-        render(<NotesList />, { wrapper: createWrapper() });
+        renderWithAppContext(<NotesList />);
 
         // Get the dummy note and delete it
         const notes = await screen.findAllByRole("listitem");
@@ -306,7 +285,7 @@ describe("Notes List", () => {
 
     describe("pinning notes", () => {
       it("allows pinning and unpinning a note", async () => {
-        render(<NotesList />, { wrapper: createWrapper() });
+        renderWithAppContext(<NotesList />);
 
         // Get the dummy note and delete it
         const notes = await screen.findAllByRole("listitem");
