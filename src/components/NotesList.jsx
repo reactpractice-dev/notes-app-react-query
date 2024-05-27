@@ -1,9 +1,12 @@
 import AddNote from "./AddNote";
 import Note from "./Note";
 import { useNotes } from "../api/get-notes";
+import { useState } from "react";
+import EditNote from "./EditNote";
 
 const NotesList = () => {
   const { isPending, error, data: notes, isFetching } = useNotes();
+  const [noteBeingEdited, setNoteBeingEdited] = useState(null);
 
   if (isPending) return "Loading...";
 
@@ -36,7 +39,11 @@ const NotesList = () => {
                 margin: "5px",
               }}
             >
-              <Note {...note} />
+              {noteBeingEdited === note.id ? (
+                <EditNote note={note} onSave={() => setNoteBeingEdited(null)} />
+              ) : (
+                <Note {...note} onClick={() => setNoteBeingEdited(note.id)} />
+              )}
             </li>
           ))}
         </ul>
