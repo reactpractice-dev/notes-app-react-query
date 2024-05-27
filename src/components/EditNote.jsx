@@ -15,13 +15,13 @@ const EditNote = ({ note, onSave }) => {
       {
         onSuccess: () => {
           toast.success("Note successfully saved");
+          onSave();
         },
         onError: () => {
           toast.error("There was an error saving the note");
         },
       }
     );
-    onSave();
   };
   return (
     <form
