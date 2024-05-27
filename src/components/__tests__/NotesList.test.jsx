@@ -28,6 +28,12 @@ const createWrapper = () => {
   );
 };
 
+const waitOneTick = async () => {
+  // wait one tick, to allow the loading state to show
+  // https://github.com/TanStack/query/issues/4379
+  await new Promise((resolve) => setTimeout(resolve, 0));
+};
+
 describe("Notes List", () => {
   beforeEach(() => {
     // remove all toasts before each test
@@ -113,16 +119,13 @@ describe("Notes List", () => {
           const postedNote = await request.json();
           postedNote.id = uuid();
           dummyNotes.push(postedNote);
-          delay();
+          await waitOneTick();
           return HttpResponse.json(postedNote);
         }),
         http.delete("http://localhost:3000/notes/:id", async ({ params }) => {
           const index = dummyNotes.findIndex((note) => note.id === params.id);
           dummyNotes.splice(index, 1);
-          delay();
-          // wait one tick, to allow the loading state to show
-          // https://github.com/TanStack/query/issues/4379
-          await new Promise((resolve) => setTimeout(resolve, 0));
+          await waitOneTick();
           return HttpResponse.json();
         }),
         http.patch(
@@ -185,8 +188,10 @@ describe("Notes List", () => {
         await userEvent.click(screen.getByRole("button", { name: "Add note" }));
 
         // Check new note is displayed in the notes list
-        const notes = await screen.findAllByRole("listitem");
-        expect(notes).toHaveLength(2);
+        await waitFor(() => {
+          expect(screen.getAllByRole("listitem")).toHaveLength(2);
+        });
+        const notes = screen.getAllByRole("listitem");
         expect(within(notes[0]).getByText("Testing")).toBeInTheDocument();
         expect(
           within(notes[0]).getByText("Don't forget to check the tests")
