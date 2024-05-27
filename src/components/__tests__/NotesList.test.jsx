@@ -9,7 +9,7 @@ import server from "../../../tests/mock-api-server";
 import NotesList from "../NotesList";
 import userEvent from "@testing-library/user-event";
 import { v4 as uuid } from "uuid";
-import { renderWithAppContext, waitOneTick } from "../../../tests/utils";
+import { renderWithAppContext } from "../../../tests/utils";
 
 describe("Notes List", () => {
   describe("viewing notes", () => {
@@ -92,13 +92,11 @@ describe("Notes List", () => {
           const postedNote = await request.json();
           postedNote.id = uuid();
           dummyNotes.push(postedNote);
-          await waitOneTick();
           return HttpResponse.json(postedNote);
         }),
         http.delete("http://localhost:3000/notes/:id", async ({ params }) => {
           const index = dummyNotes.findIndex((note) => note.id === params.id);
           dummyNotes.splice(index, 1);
-          await waitOneTick();
           return HttpResponse.json();
         }),
         http.patch(
@@ -107,7 +105,6 @@ describe("Notes List", () => {
             const index = dummyNotes.findIndex((note) => note.id === params.id);
             const postedNote = await request.json();
             dummyNotes[index] = { ...dummyNotes[index], ...postedNote };
-            delay();
             return HttpResponse.json();
           }
         )
@@ -153,6 +150,33 @@ describe("Notes List", () => {
       await waitFor(() =>
         expect(screen.queryAllByRole("listitem")).toHaveLength(0)
       );
+    });
+
+    it("allows pinning and unpinning a note", async () => {
+      renderWithAppContext(<NotesList />);
+
+      // Get the dummy note and delete it
+      const notes = await screen.findAllByRole("listitem");
+      expect(notes).toHaveLength(1);
+
+      const pinNoteButton = within(notes[0]).getByRole("button", {
+        name: "Pin note",
+      });
+      await userEvent.click(pinNoteButton);
+
+      // Check the note is now pinned
+      const unpinButton = within(notes[0]).queryByRole("button", {
+        name: "Unpin note",
+      });
+      expect(unpinButton).toBeInTheDocument();
+
+      // Check users can unpin it
+      await userEvent.click(unpinButton);
+      expect(
+        within(notes[0]).queryByRole("button", {
+          name: "Pin note",
+        })
+      ).toBeInTheDocument();
     });
   });
 });
