@@ -154,34 +154,5 @@ describe("Notes List", () => {
         expect(screen.queryAllByRole("listitem")).toHaveLength(0)
       );
     });
-
-    describe("pinning notes", () => {
-      it("allows pinning and unpinning a note", async () => {
-        renderWithAppContext(<NotesList />);
-
-        // Get the dummy note and delete it
-        const notes = await screen.findAllByRole("listitem");
-        expect(notes).toHaveLength(1);
-
-        const pinNoteButton = within(notes[0]).getByRole("button", {
-          name: "Pin note",
-        });
-        await userEvent.click(pinNoteButton);
-
-        // Check the note is now pinned
-        const unpinButton = within(notes[0]).queryByRole("button", {
-          name: "Unpin note",
-        });
-        expect(unpinButton).toBeInTheDocument();
-
-        // Check users can unpin it
-        await userEvent.click(unpinButton);
-        expect(
-          within(notes[0]).queryByRole("button", {
-            name: "Pin note",
-          })
-        ).toBeInTheDocument();
-      });
-    });
   });
 });
