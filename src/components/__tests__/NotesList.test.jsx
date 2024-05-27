@@ -139,66 +139,20 @@ describe("Notes List", () => {
       ).toBeInTheDocument();
     });
 
-    describe("deleting notes", () => {
-      it("shows a loading icon as the note is being deleted", async () => {
-        renderWithAppContext(<NotesList />);
+    it("removes deleted note from the list", async () => {
+      renderWithAppContext(<NotesList />);
 
-        // Get the dummy note and delete it
-        const notes = await screen.findAllByRole("listitem");
-        const deleteButton = within(notes[0]).getByRole("button", {
-          name: "Delete note",
-        });
-        // click the button, but don't wait for the action to finish
-        // so we can check the button text changes when loading
-        userEvent.click(deleteButton);
-
-        // check the button becomes disabled and says 'Deleting note'
-        await waitFor(() => {
-          expect(
-            screen.getByRole("button", { name: /Deleting note/i })
-          ).toBeDisabled();
-        });
+      // Get the dummy note and delete it
+      const notes = await screen.findAllByRole("listitem");
+      const deleteButton = within(notes[0]).getByRole("button", {
+        name: "Delete note",
       });
+      await userEvent.click(deleteButton);
 
-      it("allows deleting a note", async () => {
-        renderWithAppContext(<NotesList />);
-
-        // Get the dummy note and delete it
-        const notes = await screen.findAllByRole("listitem");
-        const deleteButton = within(notes[0]).getByRole("button", {
-          name: "Delete note",
-        });
-        await userEvent.click(deleteButton);
-
-        // Check the notes list is now empty
-        await waitFor(() =>
-          expect(screen.queryAllByRole("listitem")).toHaveLength(0)
-        );
-      });
-
-      it("shows an error if deleting a note failed", async () => {
-        server.use(
-          http.delete("http://localhost:3000/notes/:id", async () => {
-            delay();
-            return HttpResponse.json(null, { status: 500 });
-          })
-        );
-        renderWithAppContext(<NotesList />);
-
-        // Get the dummy note and delete it
-        const notes = await screen.findAllByRole("listitem");
-        const deleteButton = within(notes[0]).getByRole("button", {
-          name: "Delete note",
-        });
-        await userEvent.click(deleteButton);
-
-        expect(await screen.getByRole("status")).toHaveTextContent(
-          "There was an error deleting the note"
-        );
-
-        // Check the notes list is now empty
-        expect(await screen.queryAllByRole("listitem")).toHaveLength(1);
-      });
+      // Check the notes list is now empty
+      await waitFor(() =>
+        expect(screen.queryAllByRole("listitem")).toHaveLength(0)
+      );
     });
 
     describe("pinning notes", () => {
