@@ -1,6 +1,6 @@
 # React Practice - Build a notes app
 
-Starter repo for building a Notes App using React Query and json-server.
+Starter repo for [building a Notes App using React Query and json-server](https://reactpractice.dev/exercise/build-a-notes-app-with-react-query-and-json-server/).
 
 Getting started:
 
