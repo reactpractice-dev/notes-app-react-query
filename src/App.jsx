@@ -1,7 +1,5 @@
-import RandomQuote from "./RandomQuote";
-
 function App() {
-  return <RandomQuote />;
+  return <div>Build the Notes app here!</div>;
 }
 
 export default App;
