@@ -5,7 +5,14 @@ import { render } from "@testing-library/react";
 // see https://tkdodo.eu/blog/testing-react-query for details
 // on testing components that use react query
 const createWrapper = () => {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        // disable retries so we can test errors
+        retry: false,
+      },
+    },
+  });
   // eslint-disable-next-line react/display-name
   return ({ children }) => (
     <QueryClientProvider client={queryClient}>
