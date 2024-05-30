@@ -28,50 +28,86 @@ describe("Notes List", () => {
       expect(notes.map((note) => note.textContent)).toEqual(["hello tests"]);
     });
 
-    it("shows notes with the latest one on top", async () => {
+    it("shows the title and content for each note", async () => {
       server.use(
-        http.get("http://localhost:3000/notes", () => {
+        http.get("http://localhost:3000/notes", async () => {
           return HttpResponse.json([
-            { id: uuid(), content: "first" },
-            { id: uuid(), content: "second" },
-            { id: uuid(), content: "third" },
-          ]);
-        })
-      );
-      renderWithAppContext(<NotesList />);
-
-      await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
-
-      const notes = screen.getAllByRole("listitem");
-      expect(notes.map((note) => note.textContent)).toEqual([
-        "third",
-        "second",
-        "first",
-      ]);
-    });
-
-    it("shows pinned notes at the top", async () => {
-      server.use(
-        http.get("http://localhost:3000/notes", () => {
-          return HttpResponse.json([
-            { id: uuid(), content: "first" },
-            { id: uuid(), content: "second", is_pinned: true },
-            { id: uuid(), content: "third" },
-            { id: uuid(), content: "fourth", is_pinned: true },
-            { id: uuid(), content: "fifth" },
+            { id: uuid(), title: "title1", content: "content1" },
+            { id: uuid(), title: "title2", content: "content2" },
           ]);
         })
       );
       renderWithAppContext(<NotesList />);
 
       const notes = await screen.findAllByRole("listitem");
-      expect(notes.map((note) => note.textContent)).toEqual([
-        "fourth",
-        "second",
-        "fifth",
-        "third",
-        "first",
-      ]);
+      expect(notes).toHaveLength(2);
+
+      expect(screen.getByText(/title1/)).toBeInTheDocument();
+      expect(screen.getByText(/content1/)).toBeInTheDocument();
+      expect(screen.getByText(/title2/)).toBeInTheDocument();
+      expect(screen.getByText(/content2/)).toBeInTheDocument();
+    });
+
+    it("shows an error if the notes couldn't be fetched", async () => {
+      server.use(
+        http.get("http://localhost:3000/notes", async () => {
+          return HttpResponse.json(null, { status: 500 });
+        })
+      );
+      renderWithAppContext(<NotesList />);
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Request failed with status code 500/)
+        ).toBeInTheDocument();
+      });
+    });
+
+    describe("sorting", () => {
+      it("shows notes with the latest one on top", async () => {
+        server.use(
+          http.get("http://localhost:3000/notes", () => {
+            return HttpResponse.json([
+              { id: uuid(), content: "first" },
+              { id: uuid(), content: "second" },
+              { id: uuid(), content: "third" },
+            ]);
+          })
+        );
+        renderWithAppContext(<NotesList />);
+
+        await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
+
+        const notes = screen.getAllByRole("listitem");
+        expect(notes.map((note) => note.textContent)).toEqual([
+          "third",
+          "second",
+          "first",
+        ]);
+      });
+
+      it("shows pinned notes at the top", async () => {
+        server.use(
+          http.get("http://localhost:3000/notes", () => {
+            return HttpResponse.json([
+              { id: uuid(), content: "first" },
+              { id: uuid(), content: "second", is_pinned: true },
+              { id: uuid(), content: "third" },
+              { id: uuid(), content: "fourth", is_pinned: true },
+              { id: uuid(), content: "fifth" },
+            ]);
+          })
+        );
+        renderWithAppContext(<NotesList />);
+
+        const notes = await screen.findAllByRole("listitem");
+        expect(notes.map((note) => note.textContent)).toEqual([
+          "fourth",
+          "second",
+          "fifth",
+          "third",
+          "first",
+        ]);
+      });
     });
   });
 
